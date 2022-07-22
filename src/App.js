@@ -15,10 +15,8 @@ function DogRow(props) {
     const dog = props.dog;
     return (
       <tr>
-        <td onClick={() => props.getClickedId(dog.id)}>
-          <button>
-            {dog.breed}
-          </button>
+        <td>
+            <button onClick={() => props.getClickedId(dog.id)}>{dog.breed}</button>
         </td>
         <td>{dog.size}</td>
         <td>
@@ -33,7 +31,7 @@ function DogsTable () {
   const [detailedDog, getDetailedDog] = useState({});
   const [dogs, getDogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [fetchError, setFetchError] = useState("");
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     if(clickedId !== 0) {
@@ -45,10 +43,11 @@ function DogsTable () {
         }
       )
       .then(response => response.json())
-      .then(data => getDetailedDog(data));
+      .then(data => {
+        getDetailedDog(data)
+      });
     }
-  });
-
+  }, [clickedId]);
 
   useEffect(() => {
     const fetchDogs = async() => {
@@ -60,22 +59,17 @@ function DogsTable () {
           headers: { 'Content-type': 'application/x-www-form-urlencoded'},
         }
       )
-      .then(response => response.json())
-      .then(data => getDogs(data))
-      .catch(e => setFetchError("test"));
+      
+      const test = await data.json();
       setIsLoading(false);
+      getDogs(test);
     }
 
-    fetchDogs();
-    // fetch('https://localhost:7224/api/Dogs',
-    //   {
-    //     method: 'GET',
-    //     mode: 'cors',
-    //     headers: { 'Content-type': 'application/x-www-form-urlencoded'},
-    //   }
-    // )
-    // .then(response => response.json())
-    // .then(data => getDogs(data));
+    fetchDogs()
+    .catch(e => {
+      setIsLoading(false);
+      setError(e.message);
+    });
   }, []);
 
   const rows = [];
@@ -88,14 +82,13 @@ function DogsTable () {
       />
     );
   });
+  
   if(clickedId !== 0) {
     return (
-      <div>
+      <div className="detailed-table">
         <table>
           <tbody>
             <tr>
-              <td>{detailedDog.breed}</td>
-              <td>{detailedDog.size}</td>
               <td>{detailedDog.description}</td>
             </tr>
           </tbody>
@@ -108,16 +101,19 @@ function DogsTable () {
     );
   }
   return (
-
-    <div>{isLoading ? 
-      <div>Is Loading...</div> 
-        : rows ?       
-        <table>
-          <tbody>
-            {rows}
-          </tbody>
-        </table> : <div>{fetchError}</div>
-}
+    <div className="DogsTable">
+      { isLoading && <div>Loading...</div>}
+      { dogs.length > 0 && 
+      <table>
+        <thead>
+          <DogsHeaders />
+        </thead>
+        <tbody>
+          {rows}
+        </tbody>
+      </table>
+      }
+      { error && <div>{error}</div>}
     </div>
   )
 
